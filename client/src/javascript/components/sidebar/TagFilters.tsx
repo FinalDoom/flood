@@ -32,7 +32,7 @@ const TagFilters: FC = observer(() => {
       handleClick={UIActions.setTorrentTagFilter}
       count={TorrentFilterStore.taxonomy.tagCounts[filter] || 0}
       key={filter}
-      isActive={filter === TorrentFilterStore.filters.tagFilter}
+      isActive={filter === '' && !TorrentFilterStore.filters.tagFilter.length || TorrentFilterStore.filters.tagFilter.includes(filter)}
       name={filter}
       slug={filter}
       size={TorrentFilterStore.taxonomy.tagSizes[filter]}

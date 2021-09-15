@@ -37,16 +37,16 @@ const UIActions = {
     TorrentStore.selectAllTorrents();
   },
 
-  setTorrentStatusFilter: (status: TorrentStatus) => {
-    TorrentFilterStore.setStatusFilter(status);
+  setTorrentStatusFilter: (status: TorrentStatus, event: KeyboardEvent | MouseEvent | TouchEvent) => {
+    TorrentFilterStore.setStatusFilters(status, event);
   },
 
-  setTorrentTagFilter: (tag: string) => {
-    TorrentFilterStore.setTagFilter(tag);
+  setTorrentTagFilter: (tag: string, event: KeyboardEvent | MouseEvent | TouchEvent) => {
+    TorrentFilterStore.setTagFilters(tag, event);
   },
 
-  setTorrentTrackerFilter: (tracker: string) => {
-    TorrentFilterStore.setTrackerFilter(tracker);
+  setTorrentTrackerFilter: (tracker: string, event: KeyboardEvent | MouseEvent | TouchEvent) => {
+    TorrentFilterStore.setTrackerFilters(tracker, event);
   },
 
   setTorrentsSearchFilter: (search: string) => {
