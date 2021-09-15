@@ -21,7 +21,7 @@ const paths = require('../../shared/config/paths');
 const config = require('../config/webpack.config.dev');
 
 const {proxy: floodServerProxy} = require('yargs').env('FLOOD_OPTION_').option('proxy', {
-  default: 'http://192.168.1.96:3000',
+  default: 'http://127.0.0.1:3000',
   type: 'string',
 }).argv;
 

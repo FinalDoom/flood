@@ -22,7 +22,7 @@ function filterTorrents(
 ): TorrentProperties[] {
   const {type, filter} = opts;
 
-  if (filter.length > 0) {
+  if (filter.length) {
     if (type === 'status') {
       return torrentList.filter((torrent) => torrent.status.some(status => filter.includes(status)));
     }
