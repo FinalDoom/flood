@@ -210,7 +210,7 @@ class ClientRequestManager {
     return axios
       .post<TransmissionRPCResponse>(
         this.rpcURL,
-        {method: 'torrent-start-now', arguments: {ids}},
+        {method: 'torrent-start', arguments: {ids}},
         {
           headers: await this.getRequestHeaders(),
         },
