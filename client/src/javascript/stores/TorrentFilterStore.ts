@@ -5,17 +5,39 @@ import { KeyboardEvent, MouseEvent, TouchEvent } from 'react';
 import type {Taxonomy} from '@shared/types/Taxonomy';
 import torrentStatusMap, {TorrentStatus} from '@shared/constants/torrentStatusMap';
 
+interface Filter<T extends TorrentStatus | string> {
+  include: Array<T>;
+  exclude: Array<T>;
+}
+
+interface StatusFilter extends Filter<TorrentStatus> {}
+interface TagFilter extends Filter<string> {}
+interface TrackerFilter extends Filter<string> {}
+
 class TorrentFilterStore {
+  private lastStatus?: TorrentStatus;
+  private lastTag?: string;
+  private lastTracker?: string;
+
   filters: {
     searchFilter: string;
-    statusFilter: Array<TorrentStatus>;
-    tagFilter: Array<string>;
-    trackerFilter: Array<string>;
+    statusFilter: StatusFilter;
+    tagFilter: TagFilter;
+    trackerFilter: TrackerFilter;
   } = {
     searchFilter: '',
-    statusFilter: [],
-    tagFilter: [],
-    trackerFilter: [],
+    statusFilter: {
+      include: [],
+      exclude: [],
+    },
+    tagFilter: {
+      include: [],
+      exclude: [],
+    },
+    trackerFilter: {
+      include: [],
+      exclude: [],
+    },
   };
 
   taxonomy: Taxonomy = {
@@ -29,9 +51,12 @@ class TorrentFilterStore {
   @computed get isFilterActive() {
     return (
       this.filters.searchFilter !== '' ||
-      this.filters.statusFilter.length ||
-      this.filters.tagFilter.length ||
-      this.filters.trackerFilter.length
+      this.filters.statusFilter.include.length ||
+      this.filters.statusFilter.exclude.length ||
+      this.filters.tagFilter.include.length ||
+      this.filters.tagFilter.exclude.length ||
+      this.filters.trackerFilter.include.length ||
+      this.filters.trackerFilter.exclude.length
     );
   }
 
@@ -42,9 +67,18 @@ class TorrentFilterStore {
   clearAllFilters() {
     this.filters = {
       searchFilter: '',
-      statusFilter: [],
-      tagFilter: [],
-      trackerFilter: [],
+      statusFilter: {
+        include: [],
+        exclude: [],
+      },
+      tagFilter: {
+        include: [],
+        exclude: [],
+      },
+      trackerFilter: {
+        include: [],
+        exclude: [],
+      },
     };
   }
 
@@ -82,12 +116,12 @@ class TorrentFilterStore {
     this.computeFilters(trackers, this.filters.trackerFilter, filter, event);
   }
 
-  private computeFilters<T extends TorrentStatus | string>(keys: readonly T[], currentFilters: Array<T>, newFilter: T, event: KeyboardEvent | MouseEvent | TouchEvent) {
+  private computeFilters<T extends TorrentStatus | string>(keys: readonly T[], currentFilters: Filter<T>, newFilter: T, event: KeyboardEvent | MouseEvent | TouchEvent) {
     if (newFilter === '' as T) {
-      currentFilters.splice(0);
+      currentFilters.include.splice(0);
     } else if (event.shiftKey) {
-      if (currentFilters.length) {
-        const lastKey = currentFilters[currentFilters.length - 1];
+      if (currentFilters.include.length) {
+        const lastKey = currentFilters.include[currentFilters.include.length - 1];
         const lastKeyIndex = keys.indexOf(lastKey);
         let currentKeyIndex = keys.indexOf(newFilter);
 
@@ -104,21 +138,21 @@ class TorrentFilterStore {
         for (; currentKeyIndex !== lastKeyIndex; currentKeyIndex += increment) {
           const foundKey = keys[currentKeyIndex] as T;
           // if the filter isn't already selected, add the filter to the array.
-          if (!currentFilters.includes(foundKey)) {
-            currentFilters.push(foundKey);
+          if (!currentFilters.include.includes(foundKey)) {
+            currentFilters.include.push(foundKey);
           }
         }
       } else {
-        currentFilters.splice(0, currentFilters.length, newFilter);
+        currentFilters.include.splice(0, currentFilters.include.length, newFilter);
       }
     } else if (event.metaKey || event.ctrlKey) {
-      if (currentFilters.includes(newFilter)) {
-        currentFilters.splice(currentFilters.indexOf(newFilter), 1);
+      if (currentFilters.include.includes(newFilter)) {
+        currentFilters.include.splice(currentFilters.include.indexOf(newFilter), 1);
       } else {
-        currentFilters.push(newFilter);
+        currentFilters.include.push(newFilter);
       }
     } else {
-      currentFilters.splice(0, currentFilters.length, newFilter);
+      currentFilters.include.splice(0, currentFilters.include.length, newFilter);
     }
   }
 }

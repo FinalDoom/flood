@@ -31,7 +31,7 @@ const TrackerFilters: FC = observer(() => {
       handleClick={UIActions.setTorrentTrackerFilter}
       count={TorrentFilterStore.taxonomy.trackerCounts[filter] || 0}
       key={filter}
-      isActive={filter === '' && !TorrentFilterStore.filters.trackerFilter.length || TorrentFilterStore.filters.trackerFilter.includes(filter)}
+      isActive={filter === '' && !TorrentFilterStore.filters.trackerFilter.include.length || TorrentFilterStore.filters.trackerFilter.include.includes(filter)}
       name={filter}
       slug={filter}
       size={TorrentFilterStore.taxonomy.trackerSizes[filter]}
