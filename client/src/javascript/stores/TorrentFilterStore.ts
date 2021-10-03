@@ -64,127 +64,61 @@ class TorrentFilterStore {
   }
 
   setStatusFilters(filter: TorrentStatus | '', event: KeyboardEvent | MouseEvent | TouchEvent) {
-    if (filter === '') {
-      this.filters.statusFilter.splice(0);
-    } else if (event.shiftKey) {
-      if (this.filters.statusFilter.length) {
-        const lastStatus = this.filters.statusFilter[this.filters.statusFilter.length - 1];
-        const lastStatusIndex = torrentStatusMap.indexOf(lastStatus);
-        let currentStatusIndex = torrentStatusMap.indexOf(filter);
-
-        if (!~currentStatusIndex || !~lastStatusIndex) {
-          return;
-        }
-  
-        // from the previously selected index to the currently selected index,
-        // add all statuses to the selected array.
-        // if the newly selcted index is larger than the previous, start from
-        // the newly selected index and work backwards. otherwise go forwards.
-        const increment = currentStatusIndex > lastStatusIndex ? -1 : 1;
-  
-        for (; currentStatusIndex !== lastStatusIndex; currentStatusIndex += increment) {
-          const foundStatus = torrentStatusMap[currentStatusIndex];
-          // if the status isn't already selected, add the status to the array.
-          if (!this.filters.statusFilter.includes(foundStatus)) {
-            this.filters.statusFilter.push(foundStatus);
-          }
-        }
-      } else {
-        this.filters.statusFilter.splice(0, this.filters.statusFilter.length, filter);
-      }
-    } else if (event.metaKey || event.ctrlKey) {
-      if (this.filters.statusFilter.includes(filter)) {
-        this.filters.statusFilter.splice(this.filters.statusFilter.indexOf(filter), 1);
-      } else {
-        this.filters.statusFilter.push(filter);
-      }
-    } else {
-      this.filters.statusFilter.splice(0, this.filters.statusFilter.length, filter);
-    }
+    this.computeFilters(torrentStatusMap, this.filters.statusFilter, filter, event);
   }
 
   setTagFilters(filter: string, event: KeyboardEvent | MouseEvent | TouchEvent) {
-    if (filter === '') {
-      this.filters.tagFilter.splice(0);
-    } else if (event.shiftKey) {
-      if (this.filters.tagFilter.length) {
-        const tags = Object.keys(this.taxonomy.tagCounts).sort((a,b) => {if (a === 'Untagged') return -1; else if (b === 'Untagged') return 1; else return a.localeCompare(b);});
-        // Put 'untagged' in the correct second position
-        tags.splice(tags.indexOf('untagged'),1);
-        tags.splice(1,0,'untagged');
-        const lastTag = this.filters.tagFilter[this.filters.tagFilter.length - 1];
-        const lastTagIndex = tags.indexOf(lastTag);
-        let currentTagIndex = tags.indexOf(filter);
+    const tags = Object.keys(this.taxonomy.tagCounts).sort((a,b) => {if (a === 'Untagged') return -1; else if (b === 'Untagged') return 1; else return a.localeCompare(b);});
+    // Put 'untagged' in the correct second position for shift click ordering
+    tags.splice(tags.indexOf('untagged'),1);
+    tags.splice(1,0,'untagged');
 
-        if (!~currentTagIndex || !~lastTagIndex) {
-          return;
-        }
-  
-        // from the previously selected index to the currently selected index,
-        // add all tags to the selected array.
-        // if the newly selcted index is larger than the previous, start from
-        // the newly selected index and work backwards. otherwise go forwards.
-        const increment = currentTagIndex > lastTagIndex ? -1 : 1;
-  
-        for (; currentTagIndex !== lastTagIndex; currentTagIndex += increment) {
-          const foundTag = tags[currentTagIndex];
-          // if the tag isn't already selected, add the tag to the array.
-          if (!this.filters.tagFilter.includes(foundTag)) {
-            this.filters.tagFilter.push(foundTag);
-          }
-        }
-      } else {
-        this.filters.tagFilter.splice(0, this.filters.tagFilter.length, filter);
-      }
-    } else if (event.metaKey || event.ctrlKey) {
-      if (this.filters.tagFilter.includes(filter)) {
-        this.filters.tagFilter.splice(this.filters.tagFilter.indexOf(filter), 1);
-      } else {
-        this.filters.tagFilter.push(filter);
-      }
-    } else {
-      this.filters.tagFilter.splice(0, this.filters.tagFilter.length, filter);
-    }
+    this.computeFilters(tags, this.filters.tagFilter, filter, event);
   }
 
   setTrackerFilters(filter: string, event: KeyboardEvent | MouseEvent | TouchEvent) {
-    if (filter === '') {
-      this.filters.trackerFilter.splice(0);
-    } else if (event.shiftKey) {
-      if (this.filters.trackerFilter.length) {
-        const trackers = Object.keys(this.taxonomy.trackerCounts).sort((a,b) => a.localeCompare(b));
-        const lastTracker = this.filters.trackerFilter[this.filters.trackerFilter.length - 1];
-        const lastTrackerIndex = trackers.indexOf(lastTracker);
-        let currentTrackerIndex = trackers.indexOf(filter);
+    const trackers = Object.keys(this.taxonomy.trackerCounts).sort((a,b) => a.localeCompare(b));
 
-        if (!~currentTrackerIndex || !~lastTrackerIndex) {
+    this.computeFilters(trackers, this.filters.trackerFilter, filter, event);
+  }
+
+  private computeFilters<T extends TorrentStatus | string>(keys: readonly T[], currentFilters: Array<T>, newFilter: T, event: KeyboardEvent | MouseEvent | TouchEvent) {
+    if (newFilter === '' as T) {
+      currentFilters.splice(0);
+    } else if (event.shiftKey) {
+      if (currentFilters.length) {
+        const lastKey = currentFilters[currentFilters.length - 1];
+        const lastKeyIndex = keys.indexOf(lastKey);
+        let currentKeyIndex = keys.indexOf(newFilter);
+
+        if (!~currentKeyIndex || !~lastKeyIndex) {
           return;
         }
   
         // from the previously selected index to the currently selected index,
-        // add all trackers to the selected array.
+        // add all filters to the selected array.
         // if the newly selcted index is larger than the previous, start from
         // the newly selected index and work backwards. otherwise go forwards.
-        const increment = currentTrackerIndex > lastTrackerIndex ? -1 : 1;
+        const increment = currentKeyIndex > lastKeyIndex ? -1 : 1;
   
-        for (; currentTrackerIndex !== lastTrackerIndex; currentTrackerIndex += increment) {
-          const foundTracker = trackers[currentTrackerIndex];
-          // if the tracker isn't already selected, add the tracker to the array.
-          if (!this.filters.trackerFilter.includes(foundTracker)) {
-            this.filters.trackerFilter.push(foundTracker);
+        for (; currentKeyIndex !== lastKeyIndex; currentKeyIndex += increment) {
+          const foundKey = keys[currentKeyIndex] as T;
+          // if the filter isn't already selected, add the filter to the array.
+          if (!currentFilters.includes(foundKey)) {
+            currentFilters.push(foundKey);
           }
         }
       } else {
-        this.filters.trackerFilter.splice(0, this.filters.trackerFilter.length, filter);
+        currentFilters.splice(0, currentFilters.length, newFilter);
       }
     } else if (event.metaKey || event.ctrlKey) {
-      if (this.filters.trackerFilter.includes(filter)) {
-        this.filters.trackerFilter.splice(this.filters.trackerFilter.indexOf(filter), 1);
+      if (currentFilters.includes(newFilter)) {
+        currentFilters.splice(currentFilters.indexOf(newFilter), 1);
       } else {
-        this.filters.trackerFilter.push(filter);
+        currentFilters.push(newFilter);
       }
     } else {
-      this.filters.trackerFilter.splice(0, this.filters.trackerFilter.length, filter);
+      currentFilters.splice(0, currentFilters.length, newFilter);
     }
   }
 }
