@@ -32,24 +32,24 @@ class TorrentStore {
       filteredTorrents = termMatch(filteredTorrents, (properties) => properties.name, searchFilter);
     }
 
-    if (statusFilter.include.length) {
+    if (statusFilter.size) {
       filteredTorrents = filterTorrents(filteredTorrents, {
         type: 'status',
-        filter: statusFilter.include,
+        filter: statusFilter,
       });
     }
 
-    if (tagFilter.include.length) {
+    if (tagFilter.size) {
       filteredTorrents = filterTorrents(filteredTorrents, {
         type: 'tag',
-        filter: tagFilter.include,
+        filter: tagFilter,
       });
     }
 
-    if (trackerFilter.include.length) {
+    if (trackerFilter.size) {
       filteredTorrents = filterTorrents(filteredTorrents, {
         type: 'tracker',
-        filter: trackerFilter.include,
+        filter: trackerFilter,
       });
     }
 

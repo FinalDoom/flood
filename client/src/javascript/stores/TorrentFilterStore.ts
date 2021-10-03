@@ -5,39 +5,21 @@ import { KeyboardEvent, MouseEvent, TouchEvent } from 'react';
 import type {Taxonomy} from '@shared/types/Taxonomy';
 import torrentStatusMap, {TorrentStatus} from '@shared/constants/torrentStatusMap';
 
-interface Filter<T extends TorrentStatus | string> {
-  include: Array<T>;
-  exclude: Array<T>;
-}
-
-interface StatusFilter extends Filter<TorrentStatus> {}
-interface TagFilter extends Filter<string> {}
-interface TrackerFilter extends Filter<string> {}
-
 class TorrentFilterStore {
-  private lastStatus?: TorrentStatus;
-  private lastTag?: string;
-  private lastTracker?: string;
+  private lastStatus: TorrentStatus | '' = '';
+  private lastTag = '';
+  private lastTracker = '';
 
   filters: {
     searchFilter: string;
-    statusFilter: StatusFilter;
-    tagFilter: TagFilter;
-    trackerFilter: TrackerFilter;
+    statusFilter: Map<TorrentStatus, boolean>;
+    tagFilter: Map<string, boolean>;
+    trackerFilter: Map<string, boolean>;
   } = {
     searchFilter: '',
-    statusFilter: {
-      include: [],
-      exclude: [],
-    },
-    tagFilter: {
-      include: [],
-      exclude: [],
-    },
-    trackerFilter: {
-      include: [],
-      exclude: [],
-    },
+    statusFilter: new Map(),
+    tagFilter: new Map(),
+    trackerFilter: new Map(),
   };
 
   taxonomy: Taxonomy = {
@@ -51,12 +33,9 @@ class TorrentFilterStore {
   @computed get isFilterActive() {
     return (
       this.filters.searchFilter !== '' ||
-      this.filters.statusFilter.include.length ||
-      this.filters.statusFilter.exclude.length ||
-      this.filters.tagFilter.include.length ||
-      this.filters.tagFilter.exclude.length ||
-      this.filters.trackerFilter.include.length ||
-      this.filters.trackerFilter.exclude.length
+      this.filters.statusFilter.size ||
+      this.filters.tagFilter.size ||
+      this.filters.trackerFilter.size
     );
   }
 
@@ -65,21 +44,10 @@ class TorrentFilterStore {
   }
 
   clearAllFilters() {
-    this.filters = {
-      searchFilter: '',
-      statusFilter: {
-        include: [],
-        exclude: [],
-      },
-      tagFilter: {
-        include: [],
-        exclude: [],
-      },
-      trackerFilter: {
-        include: [],
-        exclude: [],
-      },
-    };
+    this.filters.searchFilter = '';
+    this.filters.statusFilter.clear();
+    this.filters.tagFilter.clear();
+    this.filters.trackerFilter.clear();
   }
 
   handleTorrentTaxonomyDiffChange(diff: Operation[]) {
@@ -98,7 +66,7 @@ class TorrentFilterStore {
   }
 
   setStatusFilters(filter: TorrentStatus | '', event: KeyboardEvent | MouseEvent | TouchEvent) {
-    this.computeFilters(torrentStatusMap, this.filters.statusFilter, filter, event);
+    this.lastStatus = this.computeFilters(torrentStatusMap, this.filters.statusFilter, this.lastStatus, filter, event);
   }
 
   setTagFilters(filter: string, event: KeyboardEvent | MouseEvent | TouchEvent) {
@@ -107,53 +75,78 @@ class TorrentFilterStore {
     tags.splice(tags.indexOf('untagged'),1);
     tags.splice(1,0,'untagged');
 
-    this.computeFilters(tags, this.filters.tagFilter, filter, event);
+    this.lastTag = this.computeFilters(tags, this.filters.tagFilter, this.lastTag, filter, event);
   }
 
   setTrackerFilters(filter: string, event: KeyboardEvent | MouseEvent | TouchEvent) {
     const trackers = Object.keys(this.taxonomy.trackerCounts).sort((a,b) => a.localeCompare(b));
 
-    this.computeFilters(trackers, this.filters.trackerFilter, filter, event);
+    this.lastTracker = this.computeFilters(trackers, this.filters.trackerFilter, this.lastTracker, filter, event);
   }
 
-  private computeFilters<T extends TorrentStatus | string>(keys: readonly T[], currentFilters: Filter<T>, newFilter: T, event: KeyboardEvent | MouseEvent | TouchEvent) {
-    if (newFilter === '' as T) {
-      currentFilters.include.splice(0);
-    } else if (event.shiftKey) {
-      if (currentFilters.include.length) {
-        const lastKey = currentFilters.include[currentFilters.include.length - 1];
-        const lastKeyIndex = keys.indexOf(lastKey);
-        let currentKeyIndex = keys.indexOf(newFilter);
+  private computeFilters<T extends TorrentStatus | string>(keys: readonly T[], currentFilters: Map<T, boolean>, previousFilter: T, newFilter: T, event: KeyboardEvent | MouseEvent | TouchEvent): T {
+    // Behavior, matches file explorer selection logic + special use of ALT = exclude
+    //
+    // value=true
+    // ALT -> value=false                   # true means include, false means exclude
+    //
+    // action=set,last=clicked              # Set present in map
+    // CTRL -> action=toggle,last=clicked   # Toggle presence in map
+    // SHIFT -> action=set,last=last
+    //    if !+CTRL: clear() first          # Clear map first
+    //    else: action=match                # Presence in map matches previousFilter presence
+    //  do loop from last->clicked: action
 
-        if (!~currentKeyIndex || !~lastKeyIndex) {
-          return;
-        }
-  
-        // from the previously selected index to the currently selected index,
-        // add all filters to the selected array.
-        // if the newly selcted index is larger than the previous, start from
-        // the newly selected index and work backwards. otherwise go forwards.
-        const increment = currentKeyIndex > lastKeyIndex ? -1 : 1;
-  
-        for (; currentKeyIndex !== lastKeyIndex; currentKeyIndex += increment) {
-          const foundKey = keys[currentKeyIndex] as T;
-          // if the filter isn't already selected, add the filter to the array.
-          if (!currentFilters.include.includes(foundKey)) {
-            currentFilters.include.push(foundKey);
-          }
+    const value = !event.altKey;
+    let last = newFilter;
+
+    // Special "All" case
+    if (newFilter === '' as T) {
+      currentFilters.clear();
+    } else if (event.shiftKey) {
+      // Maintain previously selected filter as last
+      last = previousFilter;
+      // action=set is common except when action=match and previousFilter is not in map
+      let action = (filter: T): Map<T, boolean> | boolean => currentFilters.set(filter, value);
+      if (event.ctrlKey || event.metaKey) {
+        if (!currentFilters.has(previousFilter)) {
+          // action=match
+          action = (filter: T) => currentFilters.delete(filter);
         }
       } else {
-        currentFilters.include.splice(0, currentFilters.include.length, newFilter);
+        currentFilters.clear();
       }
-    } else if (event.metaKey || event.ctrlKey) {
-      if (currentFilters.include.includes(newFilter)) {
-        currentFilters.include.splice(currentFilters.include.indexOf(newFilter), 1);
+      // If previously selected was '' ("All"), instead begin selection from the next at index 1
+      const previousKeyIndex = previousFilter === '' as T ? 1 : keys.indexOf(previousFilter);
+      const newKeyIndex = keys.indexOf(newFilter);
+
+      // If we couldn't find one or the other key, return
+      if (!~newKeyIndex || !~previousKeyIndex) {
+        return last;
+      }
+
+      // from the previously selected index to the currently selected index,
+      // execute action on each filter.
+      // if the newly selcted index is larger than the previous, start from
+      // the newly selected index and work backwards. otherwise go forwards.
+      const increment = previousKeyIndex < newKeyIndex ? 1 : -1;
+
+      for (let i = previousKeyIndex; i !== newKeyIndex + increment; i += increment) {
+        action(keys[i]);
+      }
+    } else if (event.ctrlKey) {
+      // action=toggle
+      if (currentFilters.has(newFilter)) {
+        currentFilters.delete(newFilter);
       } else {
-        currentFilters.include.push(newFilter);
+        currentFilters.set(newFilter, value);
       }
-    } else {
-      currentFilters.include.splice(0, currentFilters.include.length, newFilter);
+    } else { // just click with no modifiers
+      // action=set
+      currentFilters.clear();
+      currentFilters.set(newFilter, value);
     }
+    return last;
   }
 }
 
