@@ -26,7 +26,13 @@ class TorrentFilterStore {
   };
 
   @computed get isFilterActive() {
-    return this.locationFilter.length || this.searchFilter !== '' || this.statusFilter.length || this.tagFilter.length || this.trackerFilter.length;
+    return (
+      this.locationFilter.length ||
+      this.searchFilter !== '' ||
+      this.statusFilter.length ||
+      this.tagFilter.length ||
+      this.trackerFilter.length
+    );
   }
 
   constructor() {

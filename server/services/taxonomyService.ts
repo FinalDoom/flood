@@ -13,7 +13,7 @@ interface TaxonomyServiceEvents {
 
 class TaxonomyService extends BaseService<TaxonomyServiceEvents> {
   taxonomy: Taxonomy = {
-    locationCounts: { '': 0 },
+    locationCounts: {'': 0},
     locationSizes: {},
     locationTree: [],
     statusCounts: {'': 0},
@@ -80,7 +80,7 @@ class TaxonomyService extends BaseService<TaxonomyServiceEvents> {
 
     this.taxonomy.locationCounts = {'': 0};
     this.taxonomy.locationSizes = {};
-    this.taxonomy.locationTree = []
+    this.taxonomy.locationTree = [];
     this.taxonomy.statusCounts[''] = 0;
     this.taxonomy.tagCounts = {'': 0, untagged: 0};
     this.taxonomy.tagSizes = {};
@@ -99,42 +99,46 @@ class TaxonomyService extends BaseService<TaxonomyServiceEvents> {
       }
 
       // Order slashes before similar paths with different symbols, eg. /files/PC/ should come before /files/PC-98/ for treeing
-      return a.replace(/[^\\/\w]/g, "~").localeCompare(b.replace(/[^\\/\w]/g, "~"));
+      return a.replace(/[^\\/\w]/g, '~').localeCompare(b.replace(/[^\\/\w]/g, '~'));
     });
 
     const separator = sortedLocations.length < 2 || sortedLocations[1].includes('/') ? '/' : '\\';
     let previousLocation: LocationTreeNode;
     this.taxonomy.locationTree = sortedLocations.reduce((tree, filter) => {
       const directory = filter.split(separator).slice(-1)[0];
-      const parentPath = filter.substring(0, filter.lastIndexOf(separator + directory))
-      const location: LocationTreeNode = { directoryName: directory, fullPath: filter, children: [] };
-      while (previousLocation) { // Move up the tree to a matching parent
+      const parentPath = filter.substring(0, filter.lastIndexOf(separator + directory));
+      const location: LocationTreeNode = {directoryName: directory, fullPath: filter, children: []};
+      while (previousLocation) {
+        // Move up the tree to a matching parent
         if (!previousLocation.parent || previousLocation.fullPath === parentPath) {
           break;
         }
         previousLocation = previousLocation.parent;
       }
-      if (previousLocation && previousLocation.fullPath === parentPath && parentPath !== '') { // Child
+      if (previousLocation && previousLocation.fullPath === parentPath && parentPath !== '') {
+        // Child
         location.parent = previousLocation;
         previousLocation.children.push(location);
-      } else if (previousLocation && previousLocation.parent && previousLocation.parent.fullPath === parentPath) { // Sibling
+      } else if (previousLocation && previousLocation.parent && previousLocation.parent.fullPath === parentPath) {
+        // Sibling
         location.parent = previousLocation.parent;
         previousLocation.parent.children.push(location);
-      } else { // Root
+      } else {
+        // Root
         tree.push(location);
       }
       previousLocation = location;
       return tree;
     }, [] as LocationTreeNode[]);
-  }
+  };
 
   cleanLocationTree = (location: LocationTreeNode) => {
     location.parent = undefined;
     location.children.forEach(this.cleanLocationTree);
-  }
+  };
 
-  handleProcessTorrentListEnd = ({ torrents }: { torrents: TorrentList }) => {
-    const { length } = Object.keys(torrents);
+  handleProcessTorrentListEnd = ({torrents}: {torrents: TorrentList}) => {
+    const {length} = Object.keys(torrents);
 
     this.buildLocationTree();
     this.taxonomy.locationTree.forEach(this.cleanLocationTree);
@@ -163,7 +167,10 @@ class TaxonomyService extends BaseService<TaxonomyServiceEvents> {
     this.incrementTrackerSizes(torrentProperties.trackerURIs, torrentProperties.sizeBytes);
   };
 
-  incrementLocationCountsAndSizes(directory: TorrentProperties['directory'], sizeBytes: TorrentProperties['sizeBytes']) {
+  incrementLocationCountsAndSizes(
+    directory: TorrentProperties['directory'],
+    sizeBytes: TorrentProperties['sizeBytes'],
+  ) {
     const separator = directory.includes('/') ? '/' : '\\';
     const parts = directory.startsWith(separator) ? directory.split(separator).slice(1) : directory.split(separator);
     let heirarchy = '';
