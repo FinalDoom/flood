@@ -36,12 +36,14 @@ const SidebarFilter: FC<SidebarFilterProps> = ({
   });
   const expanderClassNames = classnames('sidebar-filter__expander', {
     'is-active': isActive,
-    'expanded': expanded,
-  })
+    expanded: expanded,
+  });
 
-  const flexCss = children ? {
-    display: 'flex',
-  }: {};
+  const flexCss = children
+    ? {
+        display: 'flex',
+      }
+    : {};
   const focusCss = {
     ':focus': {
       outline: 'none',
@@ -69,28 +71,28 @@ const SidebarFilter: FC<SidebarFilterProps> = ({
     const target = event.target as HTMLSpanElement;
     const overflowed = target.scrollWidth > target.clientWidth;
     target.title = overflowed ? target.textContent || '' : '';
-  }
+  };
 
   const unsetTitle = (event: MouseEvent) => {
     const target = event.target as HTMLSpanElement;
     target.title = '';
-  }
+  };
 
   return (
     <li>
       <div css={flexCss}>
-        {children &&
-        <button
-          className={expanderClassNames}
-          css={focusCss}
-          type="button"
-          onClick={() => setExpanded(!expanded)}
-          role="switch"
-          aria-checked={expanded}
-        >
-          <Start />
-        </button>
-        }
+        {children && (
+          <button
+            className={expanderClassNames}
+            css={focusCss}
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+            role="switch"
+            aria-checked={expanded}
+          >
+            <Start />
+          </button>
+        )}
         <button
           className={classNames}
           css={focusCss}
@@ -99,21 +101,14 @@ const SidebarFilter: FC<SidebarFilterProps> = ({
           role="menuitem"
         >
           {icon}
-          <span
-            className="name"
-            onMouseOver={setTitleForOverflowedName}
-            onMouseOut={unsetTitle}
-          >
+          <span className="name" onMouseOver={setTitleForOverflowedName} onMouseOut={unsetTitle}>
             {name}
           </span>
           <Badge>{count}</Badge>
           {size && <Size value={size} className="size" />}
         </button>
       </div>
-      {children && expanded &&
-      <ul className="sidebar-filter__nested">
-        {children}
-      </ul>}
+      {children && expanded && <ul className="sidebar-filter__nested">{children}</ul>}
     </li>
   );
 };

@@ -16,25 +16,37 @@ const LocationFilters: FC = observer(() => {
   }
 
   const buildLocationFilterTree = (location: LocationTreeNode): ReactNode => {
-    if (location.children.length === 1 && TorrentFilterStore.taxonomy.locationCounts[location.fullPath] === TorrentFilterStore.taxonomy.locationCounts[location.children[0].fullPath]) {
+    if (
+      location.children.length === 1 &&
+      TorrentFilterStore.taxonomy.locationCounts[location.fullPath] ===
+        TorrentFilterStore.taxonomy.locationCounts[location.children[0].fullPath]
+    ) {
       const onlyChild = location.children[0];
-      const separator = onlyChild.fullPath.includes('/') ? '/' : '\\'
-      return buildLocationFilterTree({...onlyChild, directoryName: location.directoryName + separator + onlyChild.directoryName});
+      const separator = onlyChild.fullPath.includes('/') ? '/' : '\\';
+      return buildLocationFilterTree({
+        ...onlyChild,
+        directoryName: location.directoryName + separator + onlyChild.directoryName,
+      });
     }
 
     const children = location.children.map(buildLocationFilterTree);
 
     return (
-      <SidebarFilter 
-        handleClick={(filter: string | '', event: KeyboardEvent | MouseEvent | TouchEvent) => TorrentFilterStore.setLocationFilters(filter, event)}
+      <SidebarFilter
+        handleClick={(filter: string | '', event: KeyboardEvent | MouseEvent | TouchEvent) =>
+          TorrentFilterStore.setLocationFilters(filter, event)
+        }
         count={TorrentFilterStore.taxonomy.locationCounts[location.fullPath] || 0}
         key={location.fullPath}
-        isActive={(location.fullPath === '' && !TorrentFilterStore.locationFilter.length) || TorrentFilterStore.locationFilter.includes(location.fullPath)}
+        isActive={
+          (location.fullPath === '' && !TorrentFilterStore.locationFilter.length) ||
+          TorrentFilterStore.locationFilter.includes(location.fullPath)
+        }
         name={location.directoryName}
         slug={location.fullPath}
         size={TorrentFilterStore.taxonomy.locationSizes[location.fullPath]}
       >
-        {children.length && children || undefined}
+        {(children.length && children) || undefined}
       </SidebarFilter>
     );
   };

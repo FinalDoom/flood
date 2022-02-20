@@ -3,7 +3,7 @@ export interface LocationTreeNode {
   fullPath: string;
   children: LocationTreeNode[];
   parent?: LocationTreeNode;
-};
+}
 
 export interface Taxonomy {
   locationCounts: Record<string, number>;
