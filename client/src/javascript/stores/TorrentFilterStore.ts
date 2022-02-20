@@ -1,9 +1,9 @@
-import { computed, makeAutoObservable } from 'mobx';
-import jsonpatch, { Operation } from 'fast-json-patch';
-import { KeyboardEvent, MouseEvent, TouchEvent } from 'react';
+import {computed, makeAutoObservable} from 'mobx';
+import jsonpatch, {Operation} from 'fast-json-patch';
+import {KeyboardEvent, MouseEvent, TouchEvent} from 'react';
 
-import type { Taxonomy } from '@shared/types/Taxonomy';
-import torrentStatusMap, { TorrentStatus } from '@shared/constants/torrentStatusMap';
+import type {Taxonomy} from '@shared/types/Taxonomy';
+import torrentStatusMap, {TorrentStatus} from '@shared/constants/torrentStatusMap';
 
 class TorrentFilterStore {
   locationFilter: Array<string> = [];
