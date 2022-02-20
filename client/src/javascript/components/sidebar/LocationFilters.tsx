@@ -56,7 +56,7 @@ const LocationFilters: FC = observer(() => {
           {title}
         </Expando>
       </li>
-      {filterElements}
+      {expanded && filterElements}
     </ul>
   );
 });
